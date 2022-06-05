@@ -1,0 +1,1 @@
+# Stock Average Calculator
