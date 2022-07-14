@@ -57,13 +57,17 @@ class MainViewModel(private val savedStateHandle: SavedStateHandle): ViewModel()
             }
 
             is UIEvent.Calculate -> {
-                // TODO:: handle empty strings
-                val totalBuyPrice = holdingQuantity.value.toInt() * purchasePrice.value.toDouble() + newQuantity.value.toInt() * newPurchasePrice.value.toDouble()
-                val totalShares = holdingQuantity.value.toInt() + newQuantity.value.toInt()
+                val holdingQuantityInt = if (holdingQuantity.value.isEmpty()) 0 else holdingQuantity.value.toInt()
+                val newQuantityInt = if (newQuantity.value.isEmpty()) 0 else newQuantity.value.toInt()
+                val purchasePriceDouble = if (purchasePrice.value.isEmpty()) 0.0 else purchasePrice.value.toDouble()
+                val newPurchasePriceDouble = if (newPurchasePrice.value.isEmpty()) 0.0 else newPurchasePrice.value.toDouble()
+
+                val totalBuyPrice = holdingQuantityInt * purchasePriceDouble + newQuantityInt * newPurchasePriceDouble
+                val totalShares = holdingQuantityInt + newQuantityInt
 
                 _totalBuyPrice.value = String.format("%.2f", totalBuyPrice)
                 _totalShares.value = totalShares.toString()
-                _averagePricePerShare.value = String.format("%.2f", (totalBuyPrice / totalShares))
+                _averagePricePerShare.value = String.format("%.2f", if (totalShares != 0) (totalBuyPrice / totalShares) else 0.0)
 
             }
 
