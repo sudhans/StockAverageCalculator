@@ -1,12 +1,21 @@
 package com.msd.stockaverage.viewmodel
 
+import android.app.Application
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.msd.stockaverage.domain.UIEvent
+import java.io.File
+import java.io.FileOutputStream
 
-class MainViewModel(private val savedStateHandle: SavedStateHandle): ViewModel(){
+class MainViewModel(application: Application): AndroidViewModel(
+    application
+){
 
     //TODO:: Use savedStateHandle
 
@@ -84,6 +93,31 @@ class MainViewModel(private val savedStateHandle: SavedStateHandle): ViewModel()
         }
     }
 
+   fun saveScreenshot(bitmap: Bitmap, fileName: String): File {
+        val dirPath = getApplication<Application>().cacheDir.path + "/screenshots"
+        val dir = File(dirPath)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        val file = File(dirPath, fileName)
+        FileOutputStream(file).use {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 85, it)
+        }
+
+       return file
+
+    }
+
+    fun shareScreenshot(file: File) {
+        val uri = Uri.fromFile(file)
+        val intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+        }
+        getApplication<Application>().startActivity(Intent.createChooser(intent, "Save Screenshot"))
+    }
 
 
 
