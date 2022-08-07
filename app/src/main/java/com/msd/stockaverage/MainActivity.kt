@@ -28,7 +28,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -67,14 +69,16 @@ class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getBitmapFromView(view: View, activity: Activity, callback: (Bitmap) -> Unit) {
+
         activity.window?.let { window ->
-            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-            val locationOfViewInWindow = IntArray(2)
-            view.getLocationInWindow(locationOfViewInWindow)
+            val bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.ARGB_8888)
             try {
-                PixelCopy.request(window, Rect(locationOfViewInWindow[0], locationOfViewInWindow[1], locationOfViewInWindow[0] + view.width, locationOfViewInWindow[1] + view.height), bitmap, { copyResult ->
+                println("Requesting pixel copy")
+                PixelCopy.request(window, bitmap, { copyResult ->
                     if (copyResult == PixelCopy.SUCCESS) {
                         callback(bitmap)
+                    } else {
+                        println("Copy result is not success")
                     }
                     // possible to handle other result codes ...
                 }, Handler(Looper.getMainLooper()))
@@ -82,25 +86,28 @@ class MainActivity : ComponentActivity() {
                 // PixelCopy may throw IllegalArgumentException, make sure to handle it
                 e.printStackTrace()
             }
-        }
+        } ?: println ("Window is null")
     }
 
     fun getScreenshot() {
         var bitmap:Bitmap? = null
-        val rootView = this@MainActivity.currentFocus?.rootView
+        val rootView = this@MainActivity.window.decorView.findViewById<View>(android.R.id.content)
         rootView?.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 getBitmapFromView(view, this@MainActivity) {
+                    println("Setting bitmap")
                     bitmap = it
+                    val file = mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName )
+                  //  mainViewModel.shareScreenshot(file)
                 }
             } else {
                 bitmap = getBitmapFromView(view)
-            }
+                bitmap?.let {
+                    val file = mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName )
+                   // mainViewModel.shareScreenshot(file)
+                }
 
-            bitmap?.let {
-               val file = mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName )
-                mainViewModel.shareScreenshot(file)
-            } ?: println("Bitmap is null")
+            }
 
         } ?: println("RootView is null")
 
@@ -114,13 +121,13 @@ class MainActivity : ComponentActivity() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name), color = MaterialTheme.colorScheme.inversePrimary) },
+                    title = { Text(stringResource(id = R.string.app_name), color = MaterialTheme.colorScheme.background) },
                     contentColor = contentColorFor(backgroundColor),
                     actions = {
                         IconButton(onClick = {
                                 getScreenshot()
                         }) {
-                            Icon(imageVector = Icons.Outlined.ShoppingCart, contentDescription = stringResource(
+                            Icon(painter = painterResource(id = R.drawable.ic_action_save_screenshot) , contentDescription = stringResource(
                                 id = R.string.app_name
                             ), tint = MaterialTheme.colorScheme.inversePrimary)
                         }
@@ -277,6 +284,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun StockTextFieldInput(
         label: String,
@@ -298,7 +306,7 @@ class MainActivity : ComponentActivity() {
             label = {
                 Text(
                     label,
-                    fontSize = 8.sp,
+                    fontSize = 10.sp,
                     overflow = TextOverflow.Ellipsis,
                     fontWeight = FontWeight.SemiBold
                 )
