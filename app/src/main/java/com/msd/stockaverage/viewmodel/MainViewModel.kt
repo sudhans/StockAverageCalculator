@@ -72,10 +72,10 @@ class MainViewModel(application: Application): AndroidViewModel(
             }
 
             is UIEvent.Calculate -> {
-                val holdingQuantityInt = if (holdingQuantity.value.isEmpty()) 0 else holdingQuantity.value.toInt()
-                val newQuantityInt = if (newQuantity.value.isEmpty()) 0 else newQuantity.value.toInt()
-                val purchasePriceDouble = if (purchasePrice.value.isEmpty()) 0.0 else purchasePrice.value.toDouble()
-                val newPurchasePriceDouble = if (newPurchasePrice.value.isEmpty()) 0.0 else newPurchasePrice.value.toDouble()
+                val holdingQuantityInt = if (holdingQuantity.value.isEmpty()) 0 else holdingQuantity.value.toIntOrNull() ?: 0
+                val newQuantityInt = if (newQuantity.value.isEmpty()) 0 else newQuantity.value.toIntOrNull() ?: 0
+                val purchasePriceDouble = if (purchasePrice.value.isEmpty()) 0.0 else purchasePrice.value.toDoubleOrNull() ?: 0.0
+                val newPurchasePriceDouble = if (newPurchasePrice.value.isEmpty()) 0.0 else newPurchasePrice.value.toDoubleOrNull() ?: 0.0
 
                 val totalBuyPrice = holdingQuantityInt * purchasePriceDouble + newQuantityInt * newPurchasePriceDouble
                 val totalShares = holdingQuantityInt + newQuantityInt

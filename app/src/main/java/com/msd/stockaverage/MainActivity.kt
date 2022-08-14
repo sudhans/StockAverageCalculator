@@ -1,6 +1,9 @@
 package com.msd.stockaverage
 
+import android.Manifest
 import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Rect
@@ -12,6 +15,7 @@ import android.view.PixelCopy
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
@@ -28,7 +32,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.msd.stockaverage.domain.UIEvent
 import com.msd.stockaverage.ui.theme.StockAverageTheme
@@ -48,18 +55,28 @@ import java.util.*
 
 class MainActivity : ComponentActivity() {
 
-   private val mainViewModel: MainViewModel by viewModels()
+    private val requestWriteStoragePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            isGranted -> if (isGranted) println("Write Storage Permission Granted")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            StockAverageTheme(darkTheme = true) {
+            StockAverageTheme {
                 StockAverageHome()
             }
         }
     }
 
-    fun getBitmapFromView(view: View): Bitmap? {
+    override fun onResume() {
+        super.onResume()
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestWriteStoragePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun getBitmapFromView(view: View): Bitmap? {
         val bitmap =
             Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -68,10 +85,14 @@ class MainActivity : ComponentActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getBitmapFromView(view: View, activity: Activity, callback: (Bitmap) -> Unit) {
+    fun getBitmapFromView(activity: Activity, callback: (Bitmap) -> Unit) {
 
         activity.window?.let { window ->
-            val bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.ARGB_8888)
+            val bitmap = Bitmap.createBitmap(
+                window.decorView.width,
+                window.decorView.height,
+                Bitmap.Config.ARGB_8888
+            )
             try {
                 println("Requesting pixel copy")
                 PixelCopy.request(window, bitmap, { copyResult ->
@@ -86,50 +107,53 @@ class MainActivity : ComponentActivity() {
                 // PixelCopy may throw IllegalArgumentException, make sure to handle it
                 e.printStackTrace()
             }
-        } ?: println ("Window is null")
+        } ?: println("Window is null")
     }
 
-    fun getScreenshot() {
-        var bitmap:Bitmap? = null
-        val rootView = this@MainActivity.window.decorView.findViewById<View>(android.R.id.content)
-        rootView?.let { view ->
+    fun getScreenshot(rootView: View, mainViewModel: MainViewModel) {
+        var bitmap: Bitmap?
+        rootView.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                getBitmapFromView(view, this@MainActivity) {
+                getBitmapFromView(this@MainActivity) {
                     println("Setting bitmap")
                     bitmap = it
-                    val file = mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName )
-                  //  mainViewModel.shareScreenshot(file)
+                    mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)
                 }
             } else {
                 bitmap = getBitmapFromView(view)
                 bitmap?.let {
-                    val file = mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName )
-                   // mainViewModel.shareScreenshot(file)
+                    mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)
                 }
-
             }
-
-        } ?: println("RootView is null")
-
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     @Preview
-    fun StockAverageHome() {
-
+    fun StockAverageHome(mainViewModel: MainViewModel = viewModel()) {
+        val activity = LocalContext.current as Activity
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name), color = MaterialTheme.colorScheme.background) },
+                    title = {
+                        Text(
+                            stringResource(id = R.string.app_name),
+                            color = Color.White
+                        )
+                    },
                     contentColor = contentColorFor(backgroundColor),
                     actions = {
                         IconButton(onClick = {
-                                getScreenshot()
+                            getScreenshot(activity.window.decorView.rootView, mainViewModel)
                         }) {
-                            Icon(painter = painterResource(id = R.drawable.ic_action_save_screenshot) , contentDescription = stringResource(
-                                id = R.string.app_name
-                            ), tint = MaterialTheme.colorScheme.inversePrimary)
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_action_save_screenshot),
+                                contentDescription = stringResource(
+                                    id = R.string.app_name
+                                ),
+                                tint = MaterialTheme.colorScheme.inversePrimary
+                            )
                         }
                     }
                 )
@@ -166,7 +190,7 @@ class MainActivity : ComponentActivity() {
                     defaultInput = mainViewModel.companyName.value,
                     keyboardType = KeyboardType.Text,
                     onTextChanged = { mainViewModel.onEvent(UIEvent.CompanyNameChanged(it)) },
-                    onNext = { localFocus.moveFocus(FocusDirection.Down) },
+                    onNext = { localFocus.moveFocus(FocusDirection.Next) },
                     onDone = { localFocus.clearFocus() }
                 )
 
@@ -183,7 +207,13 @@ class MainActivity : ComponentActivity() {
                             label = "Holding Quantity",
                             defaultInput = mainViewModel.holdingQuantity.value,
                             keyboardType = KeyboardType.Number,
-                            onTextChanged = { mainViewModel.onEvent(UIEvent.HoldingQuantityChanged(it)) },
+                            onTextChanged = {
+                                mainViewModel.onEvent(
+                                    UIEvent.HoldingQuantityChanged(
+                                        it
+                                    )
+                                )
+                            },
                             onNext = { localFocus.moveFocus(FocusDirection.Next) },
                             onDone = { localFocus.clearFocus() }
                         )
@@ -236,7 +266,13 @@ class MainActivity : ComponentActivity() {
                             label = "New Purchase Price",
                             defaultInput = mainViewModel.newPurchasePrice.value,
                             keyboardType = KeyboardType.Decimal,
-                            onTextChanged = { mainViewModel.onEvent(UIEvent.NewPurchasePriceChanged(it)) },
+                            onTextChanged = {
+                                mainViewModel.onEvent(
+                                    UIEvent.NewPurchasePriceChanged(
+                                        it
+                                    )
+                                )
+                            },
                             onNext = { localFocus.moveFocus(FocusDirection.Next) },
                             onDone = { localFocus.clearFocus() },
                             imeAction = ImeAction.Done
@@ -260,7 +296,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun StockButtons() {
+    fun StockButtons(mainViewModel: MainViewModel = viewModel()) {
         val focusManager = LocalFocusManager.current
 
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
