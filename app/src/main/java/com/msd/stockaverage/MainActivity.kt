@@ -2,11 +2,9 @@ package com.msd.stockaverage
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -16,7 +14,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,14 +23,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.SnackbarDefaults.backgroundColor
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -42,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -50,7 +46,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.msd.stockaverage.domain.UIEvent
 import com.msd.stockaverage.ui.theme.StockAverageTheme
 import com.msd.stockaverage.viewmodel.MainViewModel
+import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.math.roundToInt
 
 
 class MainActivity : ComponentActivity() {
@@ -58,6 +56,7 @@ class MainActivity : ComponentActivity() {
     private val requestWriteStoragePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             isGranted -> if (isGranted) println("Write Storage Permission Granted")
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,9 +69,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R &&
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestWriteStoragePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }else {
+            println("App has write permission")
         }
     }
 
@@ -110,7 +111,7 @@ class MainActivity : ComponentActivity() {
         } ?: println("Window is null")
     }
 
-    fun getScreenshot(rootView: View, mainViewModel: MainViewModel) {
+   private fun getScreenshot(rootView: View, mainViewModel: MainViewModel) {
         var bitmap: Bitmap?
         rootView.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -130,9 +131,12 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    @Preview
     fun StockAverageHome(mainViewModel: MainViewModel = viewModel()) {
         val activity = LocalContext.current as Activity
+        var scrollToPosition by remember { mutableStateOf(0F)}
+        val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -145,7 +149,11 @@ class MainActivity : ComponentActivity() {
                     contentColor = contentColorFor(backgroundColor),
                     actions = {
                         IconButton(onClick = {
-                            getScreenshot(activity.window.decorView.rootView, mainViewModel)
+                            coroutineScope.launch {
+                                println("Scroll to position " + scrollToPosition.roundToInt())
+                                scrollState.scrollTo(scrollToPosition.roundToInt())
+                                getScreenshot(activity.window.decorView.rootView, mainViewModel)
+                            }
                         }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_action_save_screenshot),
@@ -159,7 +167,10 @@ class MainActivity : ComponentActivity() {
                 )
             },
             content = { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding)) {
+                Box(modifier = Modifier.padding(innerPadding).onGloballyPositioned { layoutCoordinates ->
+                       scrollToPosition = layoutCoordinates.size.height.toFloat()
+
+                }) {
                     StockAverageContent()
                 }
             }
@@ -167,7 +178,6 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    //TODO:: Move composable functions to a separate file
     @Composable
     fun StockAverageContent(mainViewModel: MainViewModel = viewModel()) {
 
@@ -236,7 +246,7 @@ class MainActivity : ComponentActivity() {
 
                 }
 
-                Spacer(modifier = Modifier.padding(8.dp))
+                Spacer(modifier = Modifier.padding(4.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -281,11 +291,11 @@ class MainActivity : ComponentActivity() {
 
                 }
 
-                Spacer(modifier = Modifier.padding(8.dp))
+                Spacer(modifier = Modifier.padding(4.dp))
 
                 StockButtons()
 
-                Spacer(modifier = Modifier.padding(8.dp))
+                Spacer(modifier = Modifier.padding(4.dp))
 
                 StockTextFieldOutput(text = "Total Buy Price: ${mainViewModel.totalBuyPrice.value}")
                 StockTextFieldOutput(text = "Total Shares: ${mainViewModel.totalShares.value}")
@@ -351,7 +361,7 @@ class MainActivity : ComponentActivity() {
             keyboardActions = KeyboardActions(onDone = onDone, onNext = onNext),
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(modifier = Modifier.padding(8.dp))
+        Spacer(modifier = Modifier.padding(4.dp))
     }
 
 
@@ -361,7 +371,7 @@ class MainActivity : ComponentActivity() {
             text = text,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(modifier = Modifier.padding(8.dp))
+        Spacer(modifier = Modifier.padding(4.dp))
     }
 
 }
