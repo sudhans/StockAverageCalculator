@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -197,7 +195,7 @@ class MainActivity : ComponentActivity() {
 
                 StockTextFieldInput(
                     label = "Company Name",
-                    defaultInput = mainViewModel.companyName.value,
+                    defaultInput = mainViewModel.companyName,
                     keyboardType = KeyboardType.Text,
                     onTextChanged = { mainViewModel.onEvent(UIEvent.CompanyNameChanged(it)) },
                     onNext = { localFocus.moveFocus(FocusDirection.Next) },
@@ -215,7 +213,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         StockTextFieldInput(
                             label = "Holding Quantity",
-                            defaultInput = mainViewModel.holdingQuantity.value,
+                            defaultInput = mainViewModel.holdingQuantity,
                             keyboardType = KeyboardType.Number,
                             onTextChanged = {
                                 mainViewModel.onEvent(
@@ -236,7 +234,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         StockTextFieldInput(
                             label = "Purchase Price",
-                            defaultInput = mainViewModel.purchasePrice.value,
+                            defaultInput = mainViewModel.purchasePrice,
                             keyboardType = KeyboardType.Decimal,
                             onTextChanged = { mainViewModel.onEvent(UIEvent.PurchasePriceChanged(it)) },
                             onNext = { localFocus.moveFocus(FocusDirection.Next) },
@@ -259,7 +257,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         StockTextFieldInput(
                             label = "New Quantity",
-                            defaultInput = mainViewModel.newQuantity.value,
+                            defaultInput = mainViewModel.newQuantity,
                             keyboardType = KeyboardType.Number,
                             onTextChanged = { mainViewModel.onEvent(UIEvent.NewQuantityChanged(it)) },
                             onNext = { localFocus.moveFocus(FocusDirection.Next) },
@@ -274,7 +272,7 @@ class MainActivity : ComponentActivity() {
 
                         StockTextFieldInput(
                             label = "New Purchase Price",
-                            defaultInput = mainViewModel.newPurchasePrice.value,
+                            defaultInput = mainViewModel.newPurchasePrice,
                             keyboardType = KeyboardType.Decimal,
                             onTextChanged = {
                                 mainViewModel.onEvent(
@@ -334,16 +332,15 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun StockTextFieldInput(
         label: String,
-        defaultInput: String,
+        defaultInput: State<String>,
         keyboardType: KeyboardType,
         onTextChanged: (String) -> Unit,
         onNext: (KeyboardActionScope) -> Unit,
         onDone: (KeyboardActionScope) -> Unit,
         imeAction: ImeAction = ImeAction.Next
     ) {
-
         TextField(
-            value = defaultInput,
+            value = defaultInput.value,
             onValueChange = {
                 onTextChanged(it)
             },
