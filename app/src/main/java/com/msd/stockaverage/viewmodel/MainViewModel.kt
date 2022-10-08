@@ -3,19 +3,17 @@ package com.msd.stockaverage.viewmodel
 import android.app.Application
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
 import android.provider.MediaStore
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import com.msd.stockaverage.domain.UIEvent
+import com.msd.stockaverage.util.TAG
 import java.io.File
 import java.io.FileOutputStream
 
@@ -118,7 +116,7 @@ class MainViewModel(application: Application): AndroidViewModel(
     }
 
     fun writeToGallery(context: Context, bitmap: Bitmap): Uri? {
-        println("Writing to Gallery")
+        Log.i(TAG, "Writing to Gallery")
         val values = ContentValues()
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
@@ -129,7 +127,6 @@ class MainViewModel(application: Application): AndroidViewModel(
             values.put(MediaStore.Images.Media.IS_PENDING, true)
         }
 
-        println("Writing to Gallery - Inserting")
         val uri: Uri? = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
         if (uri != null) {
             context.contentResolver.openOutputStream(uri).use {
@@ -138,30 +135,10 @@ class MainViewModel(application: Application): AndroidViewModel(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 values.put(MediaStore.Images.Media.IS_PENDING, false)
             }
-            println("Writing to Gallery - Updating")
             context.contentResolver.update(uri, values, null, null)
-
         }
 
         return uri
     }
-
-
-
-    fun shareScreenshot(file: File) {
-        println("Share Screenshot")
-        val uri = FileProvider.getUriForFile(getApplication(), "com.msd.stockaverage.fileprovider", file)
-        val intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "image/*"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        }
-        getApplication<Application>().startActivity(Intent.createChooser(intent, "Save Screenshot").apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        })
-    }
-
-
 
 }

@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">Stock Average Calculator</string>
+
+    <!-- input fields -->
+    <string name="label_company_name">Company Name</string>
+    <string name="label_holding_quantity">Holding Quantity</string>
+    <string name="label_purchase_price">Purchase Price</string>
+    <string name="label_new_quantity">New Quantity</string>
+    <string name="label_new_purchase_price">New Purchase Price</string>
+
+    <!-- output fields  -->
+    <string name="label_total_buy_price">Total Buy Price</string>
+    <string name="label_total_shares">Total Shares</string>
+    <string name="label_average_price_per_share">Average Price Per Share</string>
+
+    <!-- buttons -->
+    <string name="label_calculate">Calculate</string>
+    <string name="label_reset">Reset</string>
+
+
 </resources>

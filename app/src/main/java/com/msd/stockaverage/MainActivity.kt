@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.PixelCopy
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -43,6 +44,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.msd.stockaverage.domain.UIEvent
 import com.msd.stockaverage.ui.theme.StockAverageTheme
+import com.msd.stockaverage.util.TAG
 import com.msd.stockaverage.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import java.util.*
@@ -52,7 +54,7 @@ import kotlin.math.roundToInt
 class MainActivity : ComponentActivity() {
 
     private val requestWriteStoragePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            isGranted -> if (isGranted) println("Write Storage Permission Granted")
+            isGranted -> if (isGranted)  Log.i(TAG, "Write Storage Permission Granted")
     }
 
 
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestWriteStoragePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }else {
-            println("App has write permission")
+            Log.i(TAG, "App has write permission")
         }
     }
 
@@ -93,20 +95,20 @@ class MainActivity : ComponentActivity() {
                 Bitmap.Config.ARGB_8888
             )
             try {
-                println("Requesting pixel copy")
+                Log.i(TAG, "Requesting pixel copy")
                 PixelCopy.request(window, bitmap, { copyResult ->
                     if (copyResult == PixelCopy.SUCCESS) {
                         callback(bitmap)
                     } else {
-                        println("Copy result is not success")
+                        Log.i(TAG, "Copy result is not success")
                     }
                     // possible to handle other result codes ...
                 }, Handler(Looper.getMainLooper()))
             } catch (e: IllegalArgumentException) {
                 // PixelCopy may throw IllegalArgumentException, make sure to handle it
-                e.printStackTrace()
+                Log.e(TAG, "PixelCopy IllegalArgumentException", e)
             }
-        } ?: println("Window is null")
+        } ?: Log.i(TAG, "Window is null")
     }
 
    private fun getScreenshot(rootView: View, mainViewModel: MainViewModel) {
@@ -114,7 +116,7 @@ class MainActivity : ComponentActivity() {
         rootView.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 getBitmapFromView(this@MainActivity) {
-                    println("Setting bitmap")
+                    Log.i(TAG, "Setting bitmap")
                     bitmap = it
                     mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)
                 }
@@ -148,7 +150,6 @@ class MainActivity : ComponentActivity() {
                     actions = {
                         IconButton(onClick = {
                             coroutineScope.launch {
-                                println("Scroll to position " + scrollToPosition.roundToInt())
                                 scrollState.scrollTo(scrollToPosition.roundToInt())
                                 getScreenshot(activity.window.decorView.rootView, mainViewModel)
                             }
@@ -194,7 +195,7 @@ class MainActivity : ComponentActivity() {
             ) {
 
                 StockTextFieldInput(
-                    label = "Company Name",
+                    label = resources.getString(R.string.label_company_name),
                     defaultInput = mainViewModel.companyName,
                     keyboardType = KeyboardType.Text,
                     onTextChanged = { mainViewModel.onEvent(UIEvent.CompanyNameChanged(it)) },
@@ -212,7 +213,7 @@ class MainActivity : ComponentActivity() {
                             .weight(1f)
                     ) {
                         StockTextFieldInput(
-                            label = "Holding Quantity",
+                            label = resources.getString(R.string.label_holding_quantity),
                             defaultInput = mainViewModel.holdingQuantity,
                             keyboardType = KeyboardType.Number,
                             onTextChanged = {
@@ -233,7 +234,7 @@ class MainActivity : ComponentActivity() {
                             .weight(1f)
                     ) {
                         StockTextFieldInput(
-                            label = "Purchase Price",
+                            label = resources.getString(R.string.label_purchase_price),
                             defaultInput = mainViewModel.purchasePrice,
                             keyboardType = KeyboardType.Decimal,
                             onTextChanged = { mainViewModel.onEvent(UIEvent.PurchasePriceChanged(it)) },
@@ -256,7 +257,7 @@ class MainActivity : ComponentActivity() {
                             .weight(1f)
                     ) {
                         StockTextFieldInput(
-                            label = "New Quantity",
+                            label = resources.getString(R.string.label_new_quantity),
                             defaultInput = mainViewModel.newQuantity,
                             keyboardType = KeyboardType.Number,
                             onTextChanged = { mainViewModel.onEvent(UIEvent.NewQuantityChanged(it)) },
@@ -271,7 +272,7 @@ class MainActivity : ComponentActivity() {
                     ) {
 
                         StockTextFieldInput(
-                            label = "New Purchase Price",
+                            label = resources.getString(R.string.label_new_purchase_price),
                             defaultInput = mainViewModel.newPurchasePrice,
                             keyboardType = KeyboardType.Decimal,
                             onTextChanged = {
@@ -295,9 +296,9 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.padding(4.dp))
 
-                StockTextFieldOutput(text = "Total Buy Price: ${mainViewModel.totalBuyPrice.value}")
-                StockTextFieldOutput(text = "Total Shares: ${mainViewModel.totalShares.value}")
-                StockTextFieldOutput(text = "Average Price Per Share: ${mainViewModel.averagePricePerShare.value}")
+                StockTextFieldOutput(text = "${resources.getString(R.string.label_total_buy_price)} ${mainViewModel.totalBuyPrice.value}")
+                StockTextFieldOutput(text = "${resources.getString(R.string.label_total_shares)} ${mainViewModel.totalShares.value}")
+                StockTextFieldOutput(text = "${resources.getString(R.string.label_average_price_per_share)} ${mainViewModel.averagePricePerShare.value}")
 
             }
         }
@@ -312,7 +313,7 @@ class MainActivity : ComponentActivity() {
                 focusManager.clearFocus()
                 mainViewModel.onEvent(UIEvent.Calculate)
             }) {
-                Text(text = "Calculate")
+                Text(text = resources.getString(R.string.label_calculate))
             }
 
             Spacer(modifier = Modifier.padding(16.dp))
@@ -321,7 +322,7 @@ class MainActivity : ComponentActivity() {
                 focusManager.clearFocus()
                 mainViewModel.onEvent(UIEvent.Reset)
             }) {
-                Text(text = "Reset")
+                Text(text = resources.getString(R.string.label_reset))
             }
 
         }
