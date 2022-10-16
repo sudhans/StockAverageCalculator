@@ -155,11 +155,11 @@ class MainActivity : ComponentActivity() {
                             }
                         }) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_action_save_screenshot),
+                                painter = painterResource(id = R.drawable.ic_baseline_screenshot_24),
                                 contentDescription = stringResource(
                                     id = R.string.app_name
                                 ),
-                                tint = MaterialTheme.colorScheme.inversePrimary
+                                tint = MaterialTheme.colorScheme.surface
                             )
                         }
                     }
