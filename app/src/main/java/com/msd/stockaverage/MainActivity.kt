@@ -353,7 +353,6 @@ class MainActivity : ComponentActivity() {
                     fontSize = 10.sp,
                     overflow = TextOverflow.Ellipsis,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimary
                 )
             },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
@@ -369,7 +368,6 @@ class MainActivity : ComponentActivity() {
         Text(
             text = text,
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.onPrimary
         )
         Spacer(modifier = Modifier.padding(4.dp))
     }
