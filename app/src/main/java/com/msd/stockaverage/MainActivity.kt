@@ -128,7 +128,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun StockAverageHome(mainViewModel: MainViewModel = viewModel()) {
@@ -159,17 +158,19 @@ class MainActivity : ComponentActivity() {
                                 contentDescription = stringResource(
                                     id = R.string.app_name
                                 ),
-                                tint = MaterialTheme.colorScheme.surface
+                                tint = MaterialTheme.colorScheme.onSecondary
                             )
                         }
                     }
                 )
             },
             content = { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).onGloballyPositioned { layoutCoordinates ->
-                       scrollToPosition = layoutCoordinates.size.height.toFloat()
+                Box(modifier = Modifier
+                    .padding(innerPadding)
+                    .onGloballyPositioned { layoutCoordinates ->
+                        scrollToPosition = layoutCoordinates.size.height.toFloat()
 
-                }) {
+                    }) {
                     StockAverageContent()
                 }
             }
@@ -313,16 +314,16 @@ class MainActivity : ComponentActivity() {
                 focusManager.clearFocus()
                 mainViewModel.onEvent(UIEvent.Calculate)
             }) {
-                Text(text = resources.getString(R.string.label_calculate))
+                Text(text = resources.getString(R.string.label_calculate), color = MaterialTheme.colorScheme.onSecondary)
             }
 
             Spacer(modifier = Modifier.padding(16.dp))
 
-            Button(modifier = Modifier.weight(1f), onClick = {
+            Button(modifier = Modifier.weight(1f),  onClick = {
                 focusManager.clearFocus()
                 mainViewModel.onEvent(UIEvent.Reset)
             }) {
-                Text(text = resources.getString(R.string.label_reset))
+                Text(text = resources.getString(R.string.label_reset), color = MaterialTheme.colorScheme.onSecondary)
             }
 
         }
@@ -345,14 +346,14 @@ class MainActivity : ComponentActivity() {
             onValueChange = {
                 onTextChanged(it)
             },
-
             singleLine = true,
             label = {
                 Text(
                     label,
                     fontSize = 10.sp,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
@@ -368,6 +369,7 @@ class MainActivity : ComponentActivity() {
         Text(
             text = text,
             modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.onPrimary
         )
         Spacer(modifier = Modifier.padding(4.dp))
     }
