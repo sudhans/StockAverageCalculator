@@ -56,9 +56,14 @@ import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
 
-    private val requestWriteStoragePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            isGranted -> if (isGranted)  Log.i(TAG, "Write Storage Permission Granted")
-    }
+    private val requestWriteStoragePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                Log.i(TAG, "Write Storage Permission Granted")
+            } else {
+                Log.i(TAG, "Write Storage Permission Denied")
+            }
+        }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,6 +123,12 @@ class MainActivity : ComponentActivity() {
         var bitmap: Bitmap?
         rootView.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        showToast(view.context, R.string.message_require_write_permission)
+                        return
+                    }
+                }
                 getBitmapFromView(this@MainActivity) {
                     Log.i(TAG, "Saving Screenshot")
                     bitmap = it
@@ -125,6 +136,10 @@ class MainActivity : ComponentActivity() {
                     showToast(view.context, R.string.message_screenshot_saved)
                 }
             } else {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    showToast(view.context, R.string.message_require_write_permission)
+                    return
+                }
                 bitmap = getBitmapFromView(view)
                 bitmap?.let {
                     mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)

@@ -19,6 +19,7 @@
 
     <!-- Notifications/Toasts -->
     <string name="message_screenshot_saved">Screenshot Saved to Gallery</string>
+    <string name="message_require_write_permission">This feature requires storage permissions</string>
 
 
 </resources>
