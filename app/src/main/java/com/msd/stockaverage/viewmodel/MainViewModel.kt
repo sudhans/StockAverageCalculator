@@ -115,7 +115,7 @@ class MainViewModel(application: Application): AndroidViewModel(
 
     }
 
-    fun writeToGallery(context: Context, bitmap: Bitmap): Uri? {
+    private fun writeToGallery(context: Context, bitmap: Bitmap) {
         Log.i(TAG, "Writing to Gallery")
         val values = ContentValues()
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/png")
@@ -128,17 +128,15 @@ class MainViewModel(application: Application): AndroidViewModel(
         }
 
         val uri: Uri? = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-        if (uri != null) {
-            context.contentResolver.openOutputStream(uri).use {
+        uri?.run {
+            context.contentResolver.openOutputStream(this).use {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 85, it)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 values.put(MediaStore.Images.Media.IS_PENDING, false)
             }
-            context.contentResolver.update(uri, values, null, null)
+            context.contentResolver.update(this, values, null, null)
         }
-
-        return uri
     }
 
 }

@@ -2,6 +2,7 @@ package com.msd.stockaverage
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -12,10 +13,12 @@ import android.os.Looper
 import android.util.Log
 import android.view.PixelCopy
 import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActionScope
@@ -116,18 +119,25 @@ class MainActivity : ComponentActivity() {
         rootView.let { view ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 getBitmapFromView(this@MainActivity) {
-                    Log.i(TAG, "Setting bitmap")
+                    Log.i(TAG, "Saving Screenshot")
                     bitmap = it
                     mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)
+                    showToast(view.context, R.string.message_screenshot_saved)
                 }
             } else {
                 bitmap = getBitmapFromView(view)
                 bitmap?.let {
                     mainViewModel.saveScreenshot(it, Date().toString() + mainViewModel.companyName)
+                    showToast(view.context, R.string.message_screenshot_saved)
                 }
             }
         }
     }
+
+    private fun showToast(context: Context, @StringRes messageId: Int) {
+        Toast.makeText(context, context.getString(messageId), Toast.LENGTH_SHORT).show()
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun StockAverageHome(mainViewModel: MainViewModel = viewModel()) {

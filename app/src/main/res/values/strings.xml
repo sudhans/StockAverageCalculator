@@ -17,5 +17,8 @@
     <string name="label_calculate">Calculate</string>
     <string name="label_reset">Reset</string>
 
+    <!-- Notifications/Toasts -->
+    <string name="message_screenshot_saved">Screenshot Saved to Gallery</string>
+
 
 </resources>
